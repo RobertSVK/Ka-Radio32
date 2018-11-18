@@ -125,7 +125,11 @@ void interrupt1Ms()
 {
 	timer_enable_intr(TIMERGROUP1MS, msTimer);
 }
+void noInterrupts()
+{noInterrupt1Ms();}
 
+void interrupts()
+{interrupt1Ms();}
 char* getIp() { return (localIp);}
 
 /*
@@ -896,7 +900,7 @@ void app_main()
 // queue for events of the sleep / wake timers
 	event_queue = xQueueCreate(10, sizeof(queue_event_t));
 	// led blinks
-	xTaskCreate(timerTask, "timerTask",1900, NULL, 1, &pxCreatedTask); 
+	xTaskCreatePinnedToCore(timerTask, "timerTask",1900, NULL, PRIO_TIMER, &pxCreatedTask,CPU_TIMER); 
 	ESP_LOGI(TAG, "%s task: %x","t0",(unsigned int)pxCreatedTask);		
 	
 	
@@ -932,13 +936,9 @@ void app_main()
         ESP_LOGE(TAG,"Hostname Init failed: %d", err);	
 
 	ESP_ERROR_CHECK(mdns_instance_name_set(device->hostname));
-	
 	ESP_ERROR_CHECK(mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0));	
- 
 	ESP_ERROR_CHECK(mdns_service_add(NULL, "_telnet", "_tcp", 23, NULL, 0));	
 
-	
-	
     // init player config
     player_config = (player_t*)calloc(1, sizeof(player_t));
     player_config->command = CMD_NONE;
@@ -961,17 +961,17 @@ void app_main()
     ESP_LOGI(TAG, "RAM left %d", esp_get_free_heap_size());
 
 	//start tasks of KaRadio32
-	xTaskCreatePinnedToCore(uartInterfaceTask, "uartInterfaceTask", 2400, NULL, 2, &pxCreatedTask,1); 
+	xTaskCreatePinnedToCore(uartInterfaceTask, "uartInterfaceTask", 2400, NULL, PRIO_UART, &pxCreatedTask,CPU_UART); 
 	ESP_LOGI(TAG, "%s task: %x","uartInterfaceTask",(unsigned int)pxCreatedTask);
 	
-	xTaskCreatePinnedToCore(clientTask, "clientTask", 3000, NULL, 4, &pxCreatedTask,0); 
+	xTaskCreatePinnedToCore(clientTask, "clientTask", 3000, NULL, PRIO_CLIENT, &pxCreatedTask,CPU_CLIENT); 
 	ESP_LOGI(TAG, "%s task: %x","clientTask",(unsigned int)pxCreatedTask);	
 	
-    xTaskCreatePinnedToCore(serversTask, "serversTask", 3000, NULL, 3, &pxCreatedTask,0); 
+    xTaskCreatePinnedToCore(serversTask, "serversTask", 3000, NULL, PRIO_SERVER, &pxCreatedTask,CPU_SERVER); 
 	ESP_LOGI(TAG, "%s task: %x","serversTask",(unsigned int)pxCreatedTask);	
 	
-	xTaskCreatePinnedToCore (task_addon, "task_addon", 2600, NULL, 4, &pxCreatedTask,1);  //high priority for the spi else too slow due to ucglib
-	ESP_LOGI(TAG, "%s task: %x","task_addon",(unsigned int)pxCreatedTask);
+	xTaskCreatePinnedToCore (task_addon, "task_addon", 2200, NULL, PRIO_ADDON, &pxCreatedTask,CPU_ADDON);  
+	ESP_LOGI(TAG, "%s task: %x","task_addon",(unsigned int)pxCreatedTask);	
 	
 /*	if (RDA5807M_detection())
 	{
@@ -980,7 +980,7 @@ void app_main()
 	}
 */	
 	printf("Init ");
-	for (int i=0;i<15;i++)
+	for (int i=0;i<10;i++)
 	{
 		printf(".");
 		vTaskDelay(10);// wait tasks init
@@ -1000,8 +1000,7 @@ void app_main()
 		kprintf("autostart: playing:%d, currentstation:%d\n",device->autostart,device->currentstation);
 		vTaskDelay(50); // wait a bit
 		playStationInt(device->currentstation);
-	}
-	
+	}	
 //
 	free(device);
 //	vTaskDelete( NULL ); 

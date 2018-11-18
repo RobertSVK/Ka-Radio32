@@ -21,9 +21,10 @@
 // ----------------------------------------------------------------------------
 // enc->acceleration configuration (for 1000Hz calls to ::service())
 //
-#define ENC_ACCEL_TOP      3072   // max. enc->acceleration: *12 (val >> 8)
-#define ENC_ACCEL_INC      50//  25
-#define ENC_ACCEL_DEC      2//   2
+#define ENC_ACCEL_TOP    2000   // max. acceleration: *12 (val >> 8)
+#define ENC_ACCEL_INC    30
+#define ENC_ACCEL_STEP   20
+#define ENC_ACCEL_DEC 	 2
 
 // ----------------------------------------------------------------------------
 /*
@@ -50,13 +51,6 @@
 
 #define TAG "ClickEncoder"
 
-
-
-void noInterrupts()
-{noInterrupt1Ms();}
-
-void interrupts()
-{interrupt1Ms();}
   
 // ----------------------------------------------------------------------------
 
@@ -78,6 +72,7 @@ Encoder_t* ClickEncoderInit(int8_t A, int8_t B, int8_t BTN, bool initHalfStep)
 	enc->keyDownTicks = 0;
 	enc->doubleClickTicks = 0;
 	enc->lastButtonCheck = 0;
+	enc->acceleration = 0;
 	
 	gpio_config_t gpio_conf;
 	gpio_conf.mode = GPIO_MODE_INPUT;
@@ -85,19 +80,19 @@ Encoder_t* ClickEncoderInit(int8_t A, int8_t B, int8_t BTN, bool initHalfStep)
 	gpio_conf.pull_down_en = (enc->pinsActive == LOW) ?GPIO_PULLDOWN_DISABLE : GPIO_PULLDOWN_ENABLE;
 	gpio_conf.intr_type = GPIO_INTR_DISABLE;
 	
-  if (enc->pinA >= 0) 
+  if (enc->pinA > 0) 
   {
-	gpio_conf.pin_bit_mask = BIT(enc->pinA);
+	gpio_conf.pin_bit_mask = ((uint64_t)(((uint64_t)1)<<enc->pinA));
 	ESP_ERROR_CHECK(gpio_config(&gpio_conf));
   }
-  if (enc->pinB >= 0) 
+  if (enc->pinB > 0) 
   {
-	gpio_conf.pin_bit_mask = BIT(enc->pinB);
+	gpio_conf.pin_bit_mask = ((uint64_t)(((uint64_t)1)<<enc->pinB));
 	ESP_ERROR_CHECK(gpio_config(&gpio_conf));
   }
   if (enc->pinBTN > 0) 
   {
-	gpio_conf.pin_bit_mask = BIT(enc->pinBTN);
+	gpio_conf.pin_bit_mask = ((uint64_t)(((uint64_t)1)<<enc->pinBTN));
 	ESP_ERROR_CHECK(gpio_config(&gpio_conf));
   }
 
@@ -226,21 +221,22 @@ int16_t getValue(Encoder_t *enc)
   if (enc->steps == 2) enc->delta = val & 1;
   else if (enc->steps == 4) enc->delta = val & 3;
   else enc->delta = 0; // default to 1 step per notch
+  uint16_t accel = ((enc->accelerationEnabled) ? (enc->acceleration ) : 0);
   interrupts();
   
   if (enc->steps == 4) val >>= 2;
   if (enc->steps == 2) val >>= 1;
 
   int16_t r = 0;
-  int16_t accel = ((enc->accelerationEnabled) ? (enc->acceleration >> 8) : 0);
-
+//  int16_t accel = ((enc->accelerationEnabled) ? (enc->acceleration >> 8) : 0);
+  if (accel > ENC_ACCEL_STEP) accel = ENC_ACCEL_STEP;
   if (val < 0) {
     r -= 1 + accel;
   }
   else if (val > 0) {
     r += 1 + accel;
   }
-  
+  //if (r != 0) printf("Acceleration: %d  accel: %d   val:%d,, R:%d\n",enc->acceleration,accel,val,r);
 
   return r;
 }

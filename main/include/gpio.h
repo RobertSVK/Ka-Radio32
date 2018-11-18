@@ -45,12 +45,21 @@
 
 // Encoder knob
 //-------------
-#define PIN_ENC0_A   GPIO_NUM_16		// 0 if encoder not used
-#define PIN_ENC0_B   GPIO_NUM_17		// DT
-#define PIN_ENC0_BTN GPIO_NUM_5		// SW
-#define PIN_ENC1_A   GPIO_NONE		// 0 if encoder not used
+#define PIN_ENC0_A   GPIO_NUM_16	//16	// 255 if encoder not used
+#define PIN_ENC0_B   GPIO_NUM_17	//17	// DT
+#define PIN_ENC0_BTN GPIO_NUM_5		//5// SW
+#define PIN_ENC1_A   GPIO_NONE		// 255 if encoder not used
 #define PIN_ENC1_B   GPIO_NONE		// DT
 #define PIN_ENC1_BTN GPIO_NONE		// SW
+
+// 3 Buttons
+//-------------
+#define PIN_BTN0_A   GPIO_NONE		
+#define PIN_BTN0_B   GPIO_NONE		
+#define PIN_BTN0_C   GPIO_NONE		
+#define PIN_BTN1_A   GPIO_NONE		
+#define PIN_BTN1_B   GPIO_NONE		
+#define PIN_BTN1_C 	 GPIO_NONE		
 
 // I2C lcd (and rda5807 if lcd is i2c or LCD_NONE)
 //------------------------------------------------
@@ -87,6 +96,10 @@
 //#define PIN_SI2C_SDA GPIO_NUM_27
 
 
+
+
+
+
 // to set a value: 		gpio_set_level(gpio_num_t gpio_num,value);
 // to read a value: 	int gpio_get_level(gpio_num_t gpio_num)
 
@@ -100,6 +113,8 @@ void gpio_get_spi_bus(uint8_t *spi_no,gpio_num_t *miso,gpio_num_t *mosi,gpio_num
 void gpio_get_vs1053(gpio_num_t * xcs,gpio_num_t *rst,gpio_num_t *xdcs,gpio_num_t *dreq);
 void gpio_get_encoder0(gpio_num_t *enca, gpio_num_t *encb, gpio_num_t *encbtn);
 void gpio_get_encoder1(gpio_num_t *enca, gpio_num_t *encb, gpio_num_t *encbtn);
+void gpio_get_button0(gpio_num_t *enca, gpio_num_t *encb, gpio_num_t *encc);
+void gpio_get_button1(gpio_num_t *enca, gpio_num_t *encb, gpio_num_t *encc);
 void gpio_get_i2c(gpio_num_t *scl,gpio_num_t *sda,gpio_num_t *rsti2c);
 void gpio_get_spi_lcd(gpio_num_t *cs ,gpio_num_t *a0,gpio_num_t *rstlcd);
 void gpio_get_ir_signal(gpio_num_t *ir);
